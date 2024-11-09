@@ -18,18 +18,13 @@ public class ProjectileTurret : MonoBehaviour
 
     List<Vector3> points = new List<Vector3>();
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
         TrackMouse();
         TurnBase();
         RotateGun();
+        DrawTrajectory();
 
         if (Input.GetButtonDown("Fire1"))
             Fire();
@@ -98,5 +93,43 @@ public class ProjectileTurret : MonoBehaviour
         }
         else
             return null;
+    }
+
+    void DrawTrajectory()
+    {
+        points.Clear();
+        points.Add(barrelEnd.position);
+
+        // Calculate the trajectory based on the projectile speed and angle
+        Vector3 initialVelocity = barrelEnd.forward * projectileSpeed;
+
+        float timeStep = 0.1f;  // How much time to increment each step
+        float maxTime = 5f;  // Max time to draw the trajectory
+
+        for (float t = 0; t < maxTime; t += timeStep)
+        {
+            Vector3 position = CalculatePositionAtTime(initialVelocity, t);
+            points.Add(position);
+
+            // if the projectile hits the ground stop drawing the trajectory
+            if (position.y <= 0)
+                break;
+        }
+
+        // Update the LineRenderer to display the trajectory points
+        line.positionCount = points.Count;
+        for (int i = 0; i < points.Count; i++)
+        {
+            line.SetPosition(i, points[i]);
+        }
+    }
+
+    Vector3 CalculatePositionAtTime(Vector3 initialVelocity, float time)
+    {
+        // Kinematic equations for projectile motion
+        float x = initialVelocity.x;
+        float y = initialVelocity.y * time + 0.5f * gravity.y * time * time;
+        float z = initialVelocity.z;
+        return new Vector3(x, y, z);
     }
 }
