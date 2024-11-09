@@ -98,22 +98,36 @@ public class ProjectileTurret : MonoBehaviour
     void DrawTrajectory()
     {
         points.Clear();
-        points.Add(barrelEnd.position);
+        //points.Add(barrelEnd.position);
 
         // Calculate the trajectory based on the projectile speed and angle
         Vector3 initialVelocity = barrelEnd.forward * projectileSpeed;
 
         float timeStep = 0.1f;  // How much time to increment each step
         float maxTime = 5f;  // Max time to draw the trajectory
+        Vector3 prevPoint = barrelEnd.position;
 
         for (float t = 0; t < maxTime; t += timeStep)
         {
-            Vector3 position = CalculatePositionAtTime(initialVelocity, t);
-            points.Add(position);
+            //Vector3 position = CalculatePositionAtTime(initialVelocity, t);
+            float y = Displacement(initialVelocity.y, t, -gravity.y);
+            float x = Displacement(initialVelocity.x, t, 0);
+            float z = Displacement(initialVelocity.z, t, 0);
 
-            // if the projectile hits the ground stop drawing the trajectory
-            if (position.y <= 0)
+            Vector3 displacement = new Vector3(x, y, z);
+            points.Add(barrelEnd.position + displacement);
+            Vector3 currPoint = barrelEnd.position + displacement;
+            Vector3 difference = currPoint - prevPoint;
+
+            RaycastHit hit;
+            if (Physics.Raycast(prevPoint, difference.normalized, out hit, 0.5f, targetLayer))
+            {
+                Debug.Log(hit.point);
+                
                 break;
+            }
+
+            prevPoint = currPoint;
         }
 
         // Update the LineRenderer to display the trajectory points
@@ -124,12 +138,17 @@ public class ProjectileTurret : MonoBehaviour
         }
     }
 
-    Vector3 CalculatePositionAtTime(Vector3 initialVelocity, float time)
+    //Vector3 CalculatePositionAtTime(Vector3 initialVelocity, float time)
+    //{
+    //    // Kinematic equations for projectile motion
+    //    float x = initialVelocity.x * time;
+    //    float y = initialVelocity.y * time + 0.5f * gravity.y * (time * time);
+    //    float z = initialVelocity.z * time;
+    //    return new Vector3(x, y, barrelEnd.position.z + z);
+    //}
+
+    float Displacement(float vI, float t, float a)
     {
-        // Kinematic equations for projectile motion
-        float x = initialVelocity.x;
-        float y = initialVelocity.y * time + 0.5f * gravity.y * time * time;
-        float z = initialVelocity.z;
-        return new Vector3(x, y, z);
+        return vI * t + 0.5f * a * (t * t);
     }
 }
